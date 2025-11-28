@@ -75,23 +75,34 @@ export default function App() {
       setIdEdicao(null);
       setMensagemErro(""); 
 
-    } catch (err) {
-      console.error("Erro ao salvar produto:", err);
+} catch (err) {
+    console.error("Erro completo:", err);
+
+    // PASSO 1: Verificamos se o servidor respondeu algo (ex: 409, 404, 500)
+    if (err.response && err.response.data) {
       
-      // 2. NOVO: Lógica para capturar a mensagem do Java (409 Conflict)
-      if (err.response && err.response.data) {
-        // Tenta pegar a mensagem de erro enviada pelo backend
-        // Pode vir como 'message' (padrão Spring) ou 'mensagem' (se personalizamos)
-        const msgBackend = err.response.data.message || err.response.data.mensagem;
-        
-        if (msgBackend) {
-            setMensagemErro(msgBackend); // Ex: "Produto já cadastrado com este nome"
-        } else {
-            setMensagemErro("Ocorreu um erro desconhecido no servidor.");
-        }
+      // PASSO 2: Tentamos pegar a mensagem.
+      // O Spring Boot padrão manda na propriedade 'message'.
+      // Se você usou GlobalExceptionHandler, pode ser 'mensagem'.
+      // Se for apenas uma string solta, pegamos o próprio data.
+      const mensagemDoBackend = err.response.data.message 
+                             || err.response.data.mensagem 
+                             || (typeof err.response.data === 'string' ? err.response.data : null);
+
+      if (mensagemDoBackend) {
+        setMensagemErro(mensagemDoBackend); // <--- AQUI MOSTRA NA TELA
       } else {
-        setMensagemErro("Erro de conexão. Verifique se o Backend está rodando.");
+        // Se chegou o JSON mas sem texto de mensagem (Cenário A que falei antes)
+        setMensagemErro("Erro " + err.response.status + ": Ocorreu um conflito, mas o servidor não detalhou o motivo.");
       }
+      
+    } else if (err.request) {
+      // O servidor nem respondeu (Backend desligado?)
+      setMensagemErro("Sem resposta do servidor. Verifique se o Backend está rodando.");
+    } else {
+      setMensagemErro("Erro na configuração da requisição.");
+    }
+  }
     }
   }
 
@@ -152,4 +163,3 @@ export default function App() {
       />
     </div>
   );
-}
