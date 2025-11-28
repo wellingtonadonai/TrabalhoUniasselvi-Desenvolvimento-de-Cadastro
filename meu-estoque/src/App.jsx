@@ -4,11 +4,15 @@ import Formulario from "./components/Formulario";
 import Header from "./components/Header";
 import Lista from "./components/Lista";
 
-const api = "http://localhost:8080/api/produtos"; // URL do backend
+const api = "http://localhost:8080/api/produtos"; // CONFERIR: Se no Java está @RequestMapping("/produtos"), aqui deve ser igual.
 
 export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [busca, setBusca] = useState("");
+  
+  // 1. NOVO: Estado para guardar a mensagem de erro que vem do Java
+  const [mensagemErro, setMensagemErro] = useState(""); 
+
   const [novoProduto, setNovoProduto] = useState({
     nome: "",
     preco: "",
@@ -24,6 +28,7 @@ export default function App() {
       setProdutos(res.data);
     } catch (err) {
       console.error("Erro ao carregar produtos:", err);
+      setMensagemErro("Não foi possível carregar os produtos. O servidor está ligado?");
     }
   }
 
@@ -34,6 +39,10 @@ export default function App() {
   // 🔹 Atualizar campos do formulário
   function handleInputChange(e) {
     const { name, value } = e.target;
+    
+    // Dica: Limpar o erro assim que o usuário começa a digitar para corrigir
+    if (mensagemErro) setMensagemErro(""); 
+
     setNovoProduto({
       ...novoProduto,
       [name]: name === "preco" || name === "quantidade" ? Number(value) : value
@@ -41,50 +50,74 @@ export default function App() {
   }
 
   // 🔹 Salvar produto
-
   async function handleSalvar(e) {
-  e.preventDefault();
-  if (!novoProduto.nome || !novoProduto.preco || !novoProduto.categoria || !novoProduto.quantidade) {
-    alert("Preencha todos os campos!");
-    return;
-  }
+    e.preventDefault();
+    
+    // Limpa erros anteriores antes de tentar
+    setMensagemErro(""); 
 
-  try {
-    if (idEdicao) {
-      await axios.put(`${api}/${idEdicao}`, novoProduto);
-    } else {
-      await axios.post(api, novoProduto);
+    if (!novoProduto.nome || !novoProduto.preco || !novoProduto.categoria || !novoProduto.quantidade) {
+      setMensagemErro("Preencha todos os campos!"); // Usa nosso estado de erro visual
+      return;
     }
-    await carregarProdutos(); // atualiza a lista
-    setNovoProduto({ nome: "", preco: 0, categoria: "", quantidade: 1 });
-    setIdEdicao(null);
-  } catch (err) {
-    console.error("Erro ao salvar produto:", err);
-    alert("Erro ao salvar produto. Veja o console.");
+
+    try {
+      if (idEdicao) {
+        await axios.put(`${api}/${idEdicao}`, novoProduto);
+      } else {
+        await axios.post(api, novoProduto);
+      }
+      
+      await carregarProdutos(); // atualiza a lista
+      
+      // Limpa tudo com sucesso
+      setNovoProduto({ nome: "", preco: 0, categoria: "", quantidade: 1 });
+      setIdEdicao(null);
+      setMensagemErro(""); 
+
+    } catch (err) {
+      console.error("Erro ao salvar produto:", err);
+      
+      // 2. NOVO: Lógica para capturar a mensagem do Java (409 Conflict)
+      if (err.response && err.response.data) {
+        // Tenta pegar a mensagem de erro enviada pelo backend
+        // Pode vir como 'message' (padrão Spring) ou 'mensagem' (se personalizamos)
+        const msgBackend = err.response.data.message || err.response.data.mensagem;
+        
+        if (msgBackend) {
+            setMensagemErro(msgBackend); // Ex: "Produto já cadastrado com este nome"
+        } else {
+            setMensagemErro("Ocorreu um erro desconhecido no servidor.");
+        }
+      } else {
+        setMensagemErro("Erro de conexão. Verifique se o Backend está rodando.");
+      }
+    }
   }
-}
 
   // 🔹 Editar produto
   function handleEditar(produto) {
     setNovoProduto(produto);
     setIdEdicao(produto.id);
+    setMensagemErro(""); // Limpa erros ao clicar em editar
   }
 
   // 🔹 Cancelar edição
   function handleCancelar() {
     setNovoProduto({ nome: "", preco: 0, categoria: "", quantidade: 1 });
     setIdEdicao(null);
+    setMensagemErro("");
   }
 
   // 🔹 Remover produto
   async function handleRemover(id) {
-    if (confirm("Tem certeza que deseja remover?")) {
+    if (window.confirm("Tem certeza que deseja remover?")) {
       try {
         await axios.delete(`${api}/${id}`);
         await carregarProdutos();
       } catch (err) {
         console.error("Erro ao remover produto:", err);
-        alert("Erro ao remover produto. Veja o console.");
+        alert("Erro ao remover produto.");
       }
     }
   }
@@ -92,6 +125,14 @@ export default function App() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <Header />
+
+      {/* 3. NOVO: Exibir o erro na tela se ele existir */}
+      {mensagemErro && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            <strong className="font-bold">Atenção: </strong>
+            <span className="block sm:inline">{mensagemErro}</span>
+        </div>
+      )}
 
       <Formulario
         novoProduto={novoProduto}
