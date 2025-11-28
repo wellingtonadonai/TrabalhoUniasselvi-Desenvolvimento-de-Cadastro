@@ -15,5 +15,6 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
     @Query("SELECT new br.com.uniasselvi.projeto.de.extensao.dto.DashboardDTO(p.categoria, COUNT(p)) FROM Produto p GROUP BY p.categoria")
     List<DashboardDTO> contarProdutosPorCategoria();
+
 }
 
