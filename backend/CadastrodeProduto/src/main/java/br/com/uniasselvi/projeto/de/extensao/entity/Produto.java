@@ -16,11 +16,12 @@ public class Produto {
     private String nome;
     private Double preco;
     private String categoria;
-    private Double quantidade;
+    private int quantidade;
 
-    public Produto(){}
+    public Produto() {
+    }
 
-    public Produto(Long id, String nome, Double preco, String categoria, Double quantidade) {
+    public Produto(Long id, String nome, Double preco, String categoria, int quantidade) {
         this.id = id;
         this.nome = nome;
         this.preco = preco;
@@ -60,11 +61,11 @@ public class Produto {
         this.categoria = categoria;
     }
 
-    public Double getQuantidade() {
+    public int getQuantidade() {
         return quantidade;
     }
 
-    public void setQuantidade(Double quantidade) {
+    public void setQuantidade(int quantidade) {
         this.quantidade = quantidade;
     }
 

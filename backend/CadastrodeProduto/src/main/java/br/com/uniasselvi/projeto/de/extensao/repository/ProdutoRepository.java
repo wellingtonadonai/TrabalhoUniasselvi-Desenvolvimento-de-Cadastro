@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
-    // já vem com métodos como save, findAll, findById, deleteById
+
+    boolean existsByNome(String nome);
 }
 

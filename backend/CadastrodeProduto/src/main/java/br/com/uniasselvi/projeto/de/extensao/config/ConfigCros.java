@@ -1,4 +1,4 @@
-package br.com.uniasselvi.projeto.de.extensao.service;
+package br.com.uniasselvi.projeto.de.extensao.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +15,7 @@ public class ConfigCros {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
                     registry.addMapping("/**")
-                            .allowedOrigins("http://localhost:5174")
+                            .allowedOrigins("https://meu-estoque-ten.vercel.app/")
                             .allowedMethods("GET", "POST", "PUT", "DELETE");
                 }
             };
