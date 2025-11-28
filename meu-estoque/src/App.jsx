@@ -4,13 +4,15 @@ import Formulario from "./components/Formulario";
 import Header from "./components/Header";
 import Lista from "./components/Lista";
 
-const api = "http://localhost:8080/api/produtos"; // CONFERIR: Se no Java está @RequestMapping("/produtos"), aqui deve ser igual.
+// ⚠️ IMPORTANTE: Verifique se no seu Java o @RequestMapping é "/produtos" ou "/api/produtos"
+// Eles precisam ser IDÊNTICOS. Vou deixar "/produtos" baseado no nosso ajuste anterior.
+const api = "http://localhost:8080/api/produtos"; 
 
 export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [busca, setBusca] = useState("");
   
-  // 1. NOVO: Estado para guardar a mensagem de erro que vem do Java
+  // Estado para guardar a mensagem de erro (Ex: "Produto já cadastrado")
   const [mensagemErro, setMensagemErro] = useState(""); 
 
   const [novoProduto, setNovoProduto] = useState({
@@ -19,6 +21,7 @@ export default function App() {
     categoria: "",
     quantidade: ""
   });
+  
   const [idEdicao, setIdEdicao] = useState(null);
 
   // 🔹 Carregar produtos do backend
@@ -28,7 +31,7 @@ export default function App() {
       setProdutos(res.data);
     } catch (err) {
       console.error("Erro ao carregar produtos:", err);
-      setMensagemErro("Não foi possível carregar os produtos. O servidor está ligado?");
+      setMensagemErro("Não foi possível conectar ao servidor. O Backend está rodando?");
     }
   }
 
@@ -40,7 +43,7 @@ export default function App() {
   function handleInputChange(e) {
     const { name, value } = e.target;
     
-    // Dica: Limpar o erro assim que o usuário começa a digitar para corrigir
+    // UX: Se o usuário começou a corrigir, sumimos com o erro vermelho
     if (mensagemErro) setMensagemErro(""); 
 
     setNovoProduto({
@@ -49,15 +52,14 @@ export default function App() {
     });
   }
 
-  // 🔹 Salvar produto
+  // 🔹 Salvar produto (Aqui está a correção principal)
   async function handleSalvar(e) {
     e.preventDefault();
-    
-    // Limpa erros anteriores antes de tentar
-    setMensagemErro(""); 
+    setMensagemErro(""); // Limpa erros antigos
 
+    // Validação simples no Front
     if (!novoProduto.nome || !novoProduto.preco || !novoProduto.categoria || !novoProduto.quantidade) {
-      setMensagemErro("Preencha todos os campos!"); // Usa nosso estado de erro visual
+      setMensagemErro("Preencha todos os campos!");
       return;
     }
 
@@ -68,41 +70,31 @@ export default function App() {
         await axios.post(api, novoProduto);
       }
       
-      await carregarProdutos(); // atualiza a lista
-      
-      // Limpa tudo com sucesso
+      // Se chegou aqui, deu certo!
+      await carregarProdutos(); 
       setNovoProduto({ nome: "", preco: 0, categoria: "", quantidade: 1 });
       setIdEdicao(null);
       setMensagemErro(""); 
 
-} catch (err) {
-    console.error("Erro completo:", err);
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
 
-    // PASSO 1: Verificamos se o servidor respondeu algo (ex: 409, 404, 500)
-    if (err.response && err.response.data) {
-      
-      // PASSO 2: Tentamos pegar a mensagem.
-      // O Spring Boot padrão manda na propriedade 'message'.
-      // Se você usou GlobalExceptionHandler, pode ser 'mensagem'.
-      // Se for apenas uma string solta, pegamos o próprio data.
-      const mensagemDoBackend = err.response.data.message 
-                             || err.response.data.mensagem 
-                             || (typeof err.response.data === 'string' ? err.response.data : null);
+      // --- LÓGICA DE CAPTURA DO ERRO DO JAVA ---
+      if (err.response && err.response.data) {
+        // Tenta pegar a mensagem nos formatos mais comuns do Spring Boot
+        const msgBackend = err.response.data.message || err.response.data.mensagem;
 
-      if (mensagemDoBackend) {
-        setMensagemErro(mensagemDoBackend); // <--- AQUI MOSTRA NA TELA
+        if (msgBackend) {
+            setMensagemErro(msgBackend); // Mostra: "Produto já cadastrado..."
+        } else {
+            // Se o Java mandou erro mas escondeu a mensagem
+            setMensagemErro(`Erro ${err.response.status}: O servidor rejeitou, mas não disse o motivo.`);
+        }
+      } else if (err.request) {
+        setMensagemErro("Erro de conexão: O Backend parece estar desligado.");
       } else {
-        // Se chegou o JSON mas sem texto de mensagem (Cenário A que falei antes)
-        setMensagemErro("Erro " + err.response.status + ": Ocorreu um conflito, mas o servidor não detalhou o motivo.");
+        setMensagemErro("Erro desconhecido ao tentar salvar.");
       }
-      
-    } else if (err.request) {
-      // O servidor nem respondeu (Backend desligado?)
-      setMensagemErro("Sem resposta do servidor. Verifique se o Backend está rodando.");
-    } else {
-      setMensagemErro("Erro na configuração da requisição.");
-    }
-  }
     }
   }
 
@@ -110,7 +102,7 @@ export default function App() {
   function handleEditar(produto) {
     setNovoProduto(produto);
     setIdEdicao(produto.id);
-    setMensagemErro(""); // Limpa erros ao clicar em editar
+    setMensagemErro(""); // Limpa erros ao entrar no modo edição
   }
 
   // 🔹 Cancelar edição
@@ -127,7 +119,7 @@ export default function App() {
         await axios.delete(`${api}/${id}`);
         await carregarProdutos();
       } catch (err) {
-        console.error("Erro ao remover produto:", err);
+        console.error("Erro ao remover:", err);
         alert("Erro ao remover produto.");
       }
     }
@@ -137,7 +129,7 @@ export default function App() {
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <Header />
 
-      {/* 3. NOVO: Exibir o erro na tela se ele existir */}
+      {/* Bloco de Erro Vermelho (Só aparece se tiver mensagemErro) */}
       {mensagemErro && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
             <strong className="font-bold">Atenção: </strong>
@@ -163,3 +155,4 @@ export default function App() {
       />
     </div>
   );
+}
