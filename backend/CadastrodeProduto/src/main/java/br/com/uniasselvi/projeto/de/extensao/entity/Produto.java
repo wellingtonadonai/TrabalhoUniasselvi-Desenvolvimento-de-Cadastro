@@ -4,7 +4,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-;import java.util.Objects;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import java.util.Objects;
 
 @Entity
 public class Produto {
@@ -13,9 +18,17 @@ public class Produto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "O nome é obrigatório")
     private String nome;
+
+    @NotNull(message = "O preço é obrigatório")
+    @Positive(message = "O preço deve ser maior que zero")
     private Double preco;
+
+    @NotBlank(message = "A categoria é obrigatória")
     private String categoria;
+
+    @Min(value = 0, message = "A quantidade não pode ser negativa")
     private int quantidade;
 
     public Produto() {
@@ -28,6 +41,8 @@ public class Produto {
         this.categoria = categoria;
         this.quantidade = quantidade;
     }
+
+    // --- GETTERS E SETTERS (Mantidos manuais) ---
 
     public Long getId() {
         return id;
@@ -72,12 +87,13 @@ public class Produto {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Produto produto)) return false;
-        return Objects.equals(getId(), produto.getId()) && Objects.equals(getNome(), produto.getNome()) && Objects.equals(getPreco(), produto.getPreco()) && Objects.equals(getCategoria(), produto.getCategoria()) && Objects.equals(getQuantidade(), produto.getQuantidade());
+        if (o == null || getClass() != o.getClass()) return false;
+        Produto produto = (Produto) o;
+        return Objects.equals(id, produto.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getNome(), getPreco(), getCategoria(), getQuantidade());
+        return Objects.hash(id);
     }
 }

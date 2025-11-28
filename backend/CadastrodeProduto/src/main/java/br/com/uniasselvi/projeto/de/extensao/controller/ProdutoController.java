@@ -1,6 +1,7 @@
 package br.com.uniasselvi.projeto.de.extensao.controller;
 
 import br.com.uniasselvi.projeto.de.extensao.config.ProdutoControllerOpenApi;
+import br.com.uniasselvi.projeto.de.extensao.dto.DashboardDTO;
 import br.com.uniasselvi.projeto.de.extensao.entity.Produto;
 import br.com.uniasselvi.projeto.de.extensao.repository.ProdutoRepository;
 import br.com.uniasselvi.projeto.de.extensao.service.ProdutoService;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/produtos")
+@RequestMapping("/produtos")
 public class ProdutoController implements ProdutoControllerOpenApi {
 
     private final ProdutoRepository repository;
@@ -28,6 +29,12 @@ public class ProdutoController implements ProdutoControllerOpenApi {
     public ResponseEntity<List<Produto>> getAll() {
         List<Produto> lista = repository.findAll();
         return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<List<DashboardDTO>> getDashboardData() {
+        // Nota: O ideal é passar pelo Service, mas para simplificar aqui chamo direto
+        return ResponseEntity.ok(repository.contarProdutosPorCategoria());
     }
 
     // Criar novo

@@ -15,7 +15,7 @@ public class ConfigCros {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
                     registry.addMapping("/**")
-                            .allowedOrigins("https://meu-estoque-ten.vercel.app/")
+                            .allowedOrigins("http://localhost:5174")
                             .allowedMethods("GET", "POST", "PUT", "DELETE");
                 }
             };
