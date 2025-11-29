@@ -25,7 +25,7 @@ import {
 } from 'recharts';
 
 // URL base do Java
-const baseUrl = "http://localhost:8080";
+const baseUrl = "https://trabalhouniasselvi-desenvolvimento-de-tqla.onrender.com";
 
 // --- CONSTANTE PARA PADRONIZAR A ROTA ---
 // CORREÇÃO: Removi o "/api", agora aponta direto para "/produtos"
