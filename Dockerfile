@@ -6,12 +6,12 @@ FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copia apenas o pom.xml primeiro
-COPY pom.xml .
+COPY backend/pom.xml .
 
 RUN mvn dependency:go-offline -B
 
 # Copia o resto do código
-COPY . .
+COPY backend .
 
 # Gera o JAR
 RUN mvn clean package -DskipTests
