@@ -15,7 +15,7 @@ public class ConfigCros {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
                     registry.addMapping("/**")
-                            .allowedOrigins("http://localhost:5175")
+                            .allowedOrigins("https://trabalho-uniasselvi-desenvolvimento.vercel.app/")
                             .allowedMethods("GET", "POST", "PUT", "DELETE");
                 }
             };
